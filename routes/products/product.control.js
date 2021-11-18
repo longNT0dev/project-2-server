@@ -6,23 +6,6 @@ const Product = require("./product.model.js");
 const verifyToken = require("../../middlewares/verifyToken.js")
 
 
-// router.get("/generate-fake-data", async (req, res, next) => {
-//   for (let i = 0; i < 70; i++) {
-//     const newProduct = new Product();
-//     newProduct.image = faker.image.image();
-//     newProduct.description = faker.commerce.productDescription();
-//     newProduct.category = faker.commerce.productMaterial();
-//     newProduct.price = faker.commerce.price();
-//     newProduct.quantity = parseInt(Math.random() * 2000000) + 150000;
-
-//     await newProduct.save((err) => {
-//       if (err) {
-//         return next(err);
-//       }
-//     });
-//   }
-//   res.json("ok");
-// });
 
 router.get("/", (req, res, next) => {
   let page = req.query.page;
@@ -61,3 +44,31 @@ router.get("/detail", (req, res, next) => {
 });
 
 module.exports = router;
+
+
+
+
+
+
+
+
+
+
+
+// router.get("/generate-fake-data", async (req, res, next) => {
+//   for (let i = 0; i < 70; i++) {
+//     const newProduct = new Product();
+//     newProduct.image = faker.image.image();
+//     newProduct.description = faker.commerce.productDescription();
+//     newProduct.category = faker.commerce.productMaterial();
+//     newProduct.price = faker.commerce.price();
+//     newProduct.quantity = parseInt(Math.random() * 2000000) + 150000;
+
+//     await newProduct.save((err) => {
+//       if (err) {
+//         return next(err);
+//       }
+//     });
+//   }
+//   res.json("ok");
+// });

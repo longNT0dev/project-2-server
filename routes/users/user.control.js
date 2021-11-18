@@ -2,8 +2,9 @@ const express = require("express");
 const router = express.Router();
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-
 const User = require("./user.model.js");
+const Product = require("../products/product.model.js");
+const upload = require("../../ultis/multer");
 
 router.post("/register", async (req, res) => {
   try {
@@ -30,36 +31,79 @@ router.post("/register", async (req, res) => {
 router.post("/login", async (req, res) => {
   try {
     const user = await User.findOne({ phoneNumber: req.query.phoneNumber });
-    if(!user) {
+    if (!user) {
       return res.status(404).json("User not found");
     }
-   
 
     const validPassword = await bcrypt.compare(
       req.query.password,
       user.password
     );
-    if(!validPassword) {
+    if (!validPassword) {
       return res.status(400).json("Wrong password");
     }
 
     let token = jwt.sign(
       {
         _id: user._id,
-        role:user.role
+        role: user.role,
       },
       process.env.SECRET_KEY,
-      {expiresIn: 60*60},
+      { expiresIn: 60 * 60 }
     );
-    return res.cookie("access_token",token,{
-      httpOnly: true,
-      secure: true
-    }).status(200).json({message:"ok"})
+    return res
+      .cookie("access_token", token, {
+        httpOnly: true,
+        secure: true,
+      })
+      .status(200)
+      .json({ message: "ok" });
   } catch (err) {
     res.status(500).json(err);
   }
 });
 
+router.post("/post-product", upload.single("image"), async (req, res, next) => {
+  try {
+    let { image, description, category, price, quantity } = req.body;
+    let product = new Product({
+      image: image,
+      description: description,
+      category: category,
+      price: price,
+      quantity: quantity,
+    });
+    await product.save();
+    return res.json("ok");
+  } catch (err) {
+    return res.json(err);
+  }
+});
+
+module.exports = router;
+
+// Xử lí việc lưu vào đâu
+// Kiểm tra password có đúng k
+// bcrypt.compare('B4c0/\/', hash, function(err, res) {
+//     // res == true
+// });
+
+// Cần kiểm tra dữ liệu dùng express-validator
+// router.get("/:id",(req, res, next)=> {
+//     userService.getById(req.params.id)
+//     .then(user => user ? res.json(user) : res.sendStatus(404))
+//     .catch(err => next(err));
+// })
+// router.put("/:id",(req, res, next)=> {
+//     userService.update(req.params.id, req.body)
+//     .then((message) => res.json({message:"success"}))
+//     .catch(err => next(err));
+// })
+// router.delete("/:id",(req, res, next)=> {
+//     userService.delete(req.params.id)
+//         .then((message) => res.json({message:"success"}))
+//         .catch(err => next(err));
+// })
 // router.get("/home", async(req, res, next) => {
 //   try {
 //     let token = req.cookies.token
@@ -79,29 +123,17 @@ router.post("/login", async (req, res) => {
 //     return res.redirect("/")
 //   }
 // });
-
-// router.get("/:id",(req, res, next)=> {
-//     userService.getById(req.params.id)
-//     .then(user => user ? res.json(user) : res.sendStatus(404))
-//     .catch(err => next(err));
-// })
-// router.put("/:id",(req, res, next)=> {
-//     userService.update(req.params.id, req.body)
-//     .then((message) => res.json({message:"success"}))
-//     .catch(err => next(err));
-// })
-// router.delete("/:id",(req, res, next)=> {
-//     userService.delete(req.params.id)
-//         .then((message) => res.json({message:"success"}))
-//         .catch(err => next(err));
-// })
-
-module.exports = router;
-
-// Xử lí việc lưu vào đâu
-// Kiểm tra password có đúng k
-// bcrypt.compare('B4c0/\/', hash, function(err, res) {
-//     // res == true
+// const cloudinary = require("../../ultis/cloudinary");
+// try {
+//    Upload image to cloudinary
+//   const result = await cloudinary.uploader.upload(req.file.path);
+//    Create new user
+// let product = new Product({
+//     image: result.public_id
 // });
-
-// Cần kiểm tra dữ liệu dùng express-validator
+//    Save product
+//   await product.save();
+//   res.json(product);
+// } catch (err) {
+//   console.log(err);
+// }

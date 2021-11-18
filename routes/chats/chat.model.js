@@ -11,4 +11,4 @@
 //     }],
 // })
 
-// module.exports = mongoose.model("Chat",ChatSchema) // Tự động chuyển thành dạng số nhiều User -> users trong collections
+// module.exports = mongoose.model("Chat",ChatSchema) // Tự động chuyển thành dạng số nhiều Chat -> chats trong collections
