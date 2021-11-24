@@ -1,17 +1,15 @@
-const { json } = require("body-parser");
 const express = require("express");
 const router = express.Router();
 // const faker = require("faker");
 const Product = require("./product.model.js");
-const verifyToken = require("../../middlewares/verifyToken.js")
+const jwt = require("jsonwebtoken");
 
-
-
+// router public
 router.get("/", (req, res, next) => {
   let page = req.query.page;
   let limit = Number(req.query.limit);
 
-  Product.find()
+  Product.find({ status: 1 })
     .skip((page - 1) * limit)
     .limit(limit)
     .exec((err, products) => {
@@ -32,7 +30,6 @@ router.get("/search", (req, res, next) => {
   });
 });
 
-
 router.get("/detail", (req, res, next) => {
   let id = req.query.id;
 
@@ -43,10 +40,40 @@ router.get("/detail", (req, res, next) => {
   });
 });
 
+// router private
+
+router.get("/waiting-product", (req, res, next) => {
+  // [1] if use config default 
+  let token = req.headers["authorization"].split(" ")[1];
+  if (!token) {
+    return res.status(403);
+  }
+  try {
+    let decoded = jwt.verify(token, process.env.SECRET_KEY);
+
+    if (decoded.role === "admin") {
+      Product.find({ status: 0 }).exec((err, products) => {
+        Product.countDocuments((err, count) => {
+          if (err) return next(err);
+          res.status(200).json({ products, count });
+        });
+      });
+    } else if (decoded.role === "user") {
+      Product.find({ status: 0, user_id: decoded._id }).exec((err, products) => {
+        Product.countDocuments((err, count) => {
+          if (err) return next(err);
+          res.status(200).json({ products, count });
+        });
+      });
+    } else {
+      return res.json("Not auth");
+    }
+  } catch (err) {
+    return res.status(403).json({ err });
+  }
+});
+
 module.exports = router;
-
-
-
 
 
 

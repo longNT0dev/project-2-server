@@ -5,6 +5,7 @@ const jwt = require("jsonwebtoken");
 const User = require("./user.model.js");
 const Product = require("../products/product.model.js");
 const upload = require("../../ultis/multer");
+let ObjectID = require("mongodb").ObjectID;
 
 router.post("/register", async (req, res) => {
   try {
@@ -30,7 +31,9 @@ router.post("/register", async (req, res) => {
 
 router.post("/login", async (req, res) => {
   try {
-    const user = await User.findOne({ phoneNumber: req.query.phoneNumber });
+    const user = await User.findOne({
+      phoneNumber: req.query.phoneNumber,
+    });
     if (!user) {
       return res.status(404).json("User not found");
     }
@@ -49,22 +52,27 @@ router.post("/login", async (req, res) => {
         role: user.role,
       },
       process.env.SECRET_KEY,
-      { expiresIn: 60 * 60 }
+      {
+        expiresIn: 60 * 60,
+      }
     );
-    return res
-      .cookie("access_token", token, {
-        httpOnly: true,
-        secure: true,
-      })
-      .status(200)
-      .json({ message: "ok" });
+    return res.status(200).json({
+      message: "ok",
+      token,
+    });
   } catch (err) {
     res.status(500).json(err);
   }
 });
 
 router.post("/post-product", upload.single("image"), async (req, res, next) => {
+  console.log(req.headers["authorization"]);
+  let token = req.headers["authorization"].split(" ")[1];
+  if (!token) {
+    return res.status(403);
+  }
   try {
+    let decoded = jwt.verify(token, process.env.SECRET_KEY);
     let { image, description, category, price, quantity } = req.body;
     let product = new Product({
       image: image,
@@ -72,12 +80,44 @@ router.post("/post-product", upload.single("image"), async (req, res, next) => {
       category: category,
       price: price,
       quantity: quantity,
+      user_id: decoded._id,
     });
     await product.save();
     return res.json("ok");
   } catch (err) {
     return res.json(err);
   }
+});
+
+router.patch("/check-product", (req, res, next) => {
+  let token = req.headers["authorization"].split(" ")[1];
+  // -1 -> decline , 1 -> accept
+  if (!token) {
+    return res.status(403);
+  }
+
+  jwt.verify(token, process.env.SECRET_KEY, async function (err, decoded) {
+    console.log(decoded);
+    if (decoded.role === "admin") {
+      console.log("hi")
+      try {
+        let result = req.query.result;
+        let productId = req.query.productId;
+        await Product.updateOne(
+          { _id: productId },
+          {
+            $set: {
+              status: result,
+            },
+          }
+        );
+      } catch (err) {
+        console.log(err)
+      }
+    } else {
+      return res.status(401);
+    }
+  });
 });
 
 module.exports = router;

@@ -21,11 +21,19 @@ const ProductSchema = mongoose.Schema({
   quantity: {
     type: Number,
     required: true,
-  }, 
+  },
+  status:{
+    type:Number,
+    default: 0
+  },
   comments: {
-    type:Array
+    type: Array
+  },
+  user_id: {
+    type:String,
+    required: true,
   }
 });
 
 
-module.exports = mongoose.model("Product",ProductSchema)
+module.exports = mongoose.model("Product", ProductSchema)
