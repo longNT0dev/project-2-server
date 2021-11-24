@@ -97,9 +97,7 @@ router.patch("/check-product", (req, res, next) => {
   }
 
   jwt.verify(token, process.env.SECRET_KEY, async function (err, decoded) {
-    console.log(decoded);
     if (decoded.role === "admin") {
-      console.log("hi")
       try {
         let result = req.query.result;
         let productId = req.query.productId;
@@ -115,7 +113,7 @@ router.patch("/check-product", (req, res, next) => {
         console.log(err)
       }
     } else {
-      return res.status(401);
+      return res.redirect("/login")
     }
   });
 });

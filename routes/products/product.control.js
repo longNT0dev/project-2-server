@@ -43,44 +43,61 @@ router.get("/detail", (req, res, next) => {
 // router private
 
 router.get("/waiting-product", (req, res, next) => {
-  // [1] if use config default 
+  // [1] if use config default
   let token = req.headers["authorization"].split(" ")[1];
   if (!token) {
-    return res.status(403);
+    return res.redirect("/login");
   }
   try {
-    let decoded = jwt.verify(token, process.env.SECRET_KEY);
+    jwt.verify(token, process.env.SECRET_KEY, function (err, decoded) {
+      if (decoded.role === "user") {
+        Product.find({ user_id: decoded._id }).exec((err, products) => {
+          Product.countDocuments((err, count) => {
+            if (err) return next(err);
+            res.status(200).json({ products, count });
+          });
+        });
+      } else if (decoded.role === "admin") {
+        Product.find({ status: 0 }).exec((err, products) => {
+          Product.countDocuments((err, count) => {
+            if (err) return next(err);
+            res.status(200).json({ products, count });
+          });
+        });
+      } else {
+        return res.redirect("/login");
+      }
+    });
+  } catch (err) {
+    return res.status(403).json({ err });
+  }
+});
 
-    if (decoded.role === "admin") {
-      Product.find({ status: 0 }).exec((err, products) => {
-        Product.countDocuments((err, count) => {
-          if (err) return next(err);
-          res.status(200).json({ products, count });
+router.get("/admin/waiting-product", (req, res, next) => {
+  // [1] if use config default
+  let token = req.headers["authorization"].split(" ")[1];
+  if (!token) {
+    return res.redirect("/login");
+  }
+  try {
+    jwt.verify(token, process.env.SECRET_KEY, function (err, decoded) {
+      if (decoded.role === "admin") {
+        Product.find({ status: 0 }).exec((err, products) => {
+          Product.countDocuments((err, count) => {
+            if (err) return next(err);
+            res.status(200).json({ products, count });
+          });
         });
-      });
-    } else if (decoded.role === "user") {
-      Product.find({ status: 0, user_id: decoded._id }).exec((err, products) => {
-        Product.countDocuments((err, count) => {
-          if (err) return next(err);
-          res.status(200).json({ products, count });
-        });
-      });
-    } else {
-      return res.json("Not auth");
-    }
+      } else {
+        return res.redirect("/login");
+      }
+    });
   } catch (err) {
     return res.status(403).json({ err });
   }
 });
 
 module.exports = router;
-
-
-
-
-
-
-
 
 // router.get("/generate-fake-data", async (req, res, next) => {
 //   for (let i = 0; i < 70; i++) {
