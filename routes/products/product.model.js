@@ -26,9 +26,12 @@ const ProductSchema = mongoose.Schema({
     type:Number,
     default: 0
   },
-  comments: {
-    type: Array
-  },
+  comments: [
+    {
+      rating: Number,
+      comment:String
+    }
+  ],
   user_id: {
     type:String,
     required: true,

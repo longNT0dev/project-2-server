@@ -32,15 +32,17 @@ app.use(cookieParser());
 
 app.use(logger("dev"));
 // parse request to body parse
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({limit:"50mb", extended: true }));
 // request to json
 app.use(express.json());
 
 // routing
 const users = require("./routes/users/user.control.js");
 const products = require("./routes/products/product.control.js");
+const orders = require("./routes/orders/order.control.js");
 app.use("/users", users);
 app.use("/product", products);
+app.use("/carts", orders);
 
 app.use("/", (req, res) => {
   res.status(200).json("ok");

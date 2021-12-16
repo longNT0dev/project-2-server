@@ -5,7 +5,6 @@ const jwt = require("jsonwebtoken");
 const User = require("./user.model.js");
 const Product = require("../products/product.model.js");
 const upload = require("../../ultis/multer");
-let ObjectID = require("mongodb").ObjectID;
 
 router.post("/register", async (req, res) => {
   try {
@@ -58,6 +57,7 @@ router.post("/login", async (req, res) => {
     );
     return res.status(200).json({
       message: "ok",
+      role: user.role,
       token,
     });
   } catch (err) {
@@ -66,7 +66,6 @@ router.post("/login", async (req, res) => {
 });
 
 router.post("/post-product", upload.single("image"), async (req, res, next) => {
-  console.log(req.headers["authorization"]);
   let token = req.headers["authorization"].split(" ")[1];
   if (!token) {
     return res.status(403);
@@ -85,7 +84,7 @@ router.post("/post-product", upload.single("image"), async (req, res, next) => {
     await product.save();
     return res.json("ok");
   } catch (err) {
-    return res.json(err);
+    return res.status(403).json({ err });
   }
 });
 
@@ -110,12 +109,98 @@ router.patch("/check-product", (req, res, next) => {
           }
         );
       } catch (err) {
-        console.log(err)
+        console.log(err);
       }
     } else {
-      return res.redirect("/login")
+      return res.redirect("/login");
     }
   });
+});
+
+router.get("/info", (req, res, next) => {
+  let token = req.headers["authorization"].split(" ")[1];
+  if (!token) {
+    return res.status(403);
+  }
+
+  jwt.verify(token, process.env.SECRET_KEY, async function (err, decoded) {
+    if (decoded._id) {
+      try {
+        let info = await User.findById(decoded._id);
+        let { name, address, phoneNumber } = info;
+        res.json({ name, address, phoneNumber });
+      } catch (err) {
+        res.json(err);
+      }
+    } else {
+      return res.redirect("/login");
+    }
+  });
+});
+
+router.patch("/update-info", (req, res, next) => {
+  let token = req.headers["authorization"].split(" ")[1];
+  if (!token) {
+    return res.status(403);
+  }
+
+  jwt.verify(token, process.env.SECRET_KEY, async function (err, decoded) {
+    if (decoded._id) {
+      let name = req.query.name;
+      let address = req.query.address;
+      let phoneNumber = req.query.phoneNumber;
+      console.log(decoded._id);
+      try {
+        await User.updateOne(
+          { _id: decoded._id },
+          {
+            $set: {
+              name: name,
+              address: address,
+              phoneNumber: phoneNumber,
+            },
+          }
+        );
+      } catch (err) {
+        res.json(err);
+      }
+    } else {
+      return res.redirect("/login");
+    }
+  });
+});
+
+router.post("/review", (req, res, next) => {
+  console.log(req.query);
+  let token = req.headers["authorization"].split(" ")[1];
+  if (!token) {
+    return res.redirect("/login");
+  }
+
+  try {
+    jwt.verify(token, process.env.SECRET_KEY, function (err, decoded) {
+      if (err) return res.json(err);
+      if (decoded._id) {
+        Product.updateOne(
+          { _id: req.query.id },
+          {
+            $push: {
+              comments: {
+                rating: parseInt(req.query.rating),
+                comment: req.query.comment,
+              },
+            },
+          },
+          function (err) {
+            if (err) return res.json(err);
+            return res.json("ok");
+          }
+        );
+      }
+    });
+  } catch (err) {
+    return res.json(err);
+  }
 });
 
 module.exports = router;

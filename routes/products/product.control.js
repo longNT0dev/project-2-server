@@ -40,6 +40,7 @@ router.get("/detail", (req, res, next) => {
   });
 });
 
+
 // router private
 
 router.get("/waiting-product", (req, res, next) => {
@@ -52,13 +53,6 @@ router.get("/waiting-product", (req, res, next) => {
     jwt.verify(token, process.env.SECRET_KEY, function (err, decoded) {
       if (decoded.role === "user") {
         Product.find({ user_id: decoded._id }).exec((err, products) => {
-          Product.countDocuments((err, count) => {
-            if (err) return next(err);
-            res.status(200).json({ products, count });
-          });
-        });
-      } else if (decoded.role === "admin") {
-        Product.find({ status: 0 }).exec((err, products) => {
           Product.countDocuments((err, count) => {
             if (err) return next(err);
             res.status(200).json({ products, count });

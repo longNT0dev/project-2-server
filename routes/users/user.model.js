@@ -14,7 +14,16 @@ const UserSchema = mongoose.Schema({
     role: {
       type: String,
       default:"user"
+    }, 
+    name:{
+      type:String,
+      default:null
+    }, 
+    address: {
+      type:String,
+      default:null
     }
+
 })
 
 module.exports = mongoose.model("User",UserSchema) // Tự động chuyển thành dạng số nhiều User -> users trong collections
