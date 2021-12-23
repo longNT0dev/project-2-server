@@ -26,4 +26,7 @@ const UserSchema = mongoose.Schema({
 
 })
 
-module.exports = mongoose.model("User",UserSchema) // Tự động chuyển thành dạng số nhiều User -> users trong collections
+module.exports = mongoose.model("User",UserSchema) 
+
+
+// Tự động chuyển thành dạng số nhiều User -> users trong collections

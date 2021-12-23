@@ -5,6 +5,8 @@ const jwt = require("jsonwebtoken");
 const User = require("./user.model.js");
 const Product = require("../products/product.model.js");
 const upload = require("../../ultis/multer");
+const Support = require("../supports/support.model.js");
+const e = require("cors");
 
 router.post("/register", async (req, res) => {
   try {
@@ -171,7 +173,6 @@ router.patch("/update-info", (req, res, next) => {
 });
 
 router.post("/review", (req, res, next) => {
-  console.log(req.query);
   let token = req.headers["authorization"].split(" ")[1];
   if (!token) {
     return res.redirect("/login");
@@ -203,6 +204,65 @@ router.post("/review", (req, res, next) => {
   }
 });
 
+router.post("/assistance", (req, res, next) => {
+  let token = req.headers["authorization"].split(" ")[1];
+  if (!token) {
+    return res.redirect("/login");
+  }
+
+  try {
+    jwt.verify(token, process.env.SECRET_KEY, async function (err, decoded) {
+      if (err) return res.json(err);
+      if (decoded._id) {
+        const supportForm = new Support({
+          productId: req.query.productId,
+          sendId: decoded._id,
+          receiveId: req.query.userId,
+          reason: req.query.reason,
+        });
+        await supportForm.save();
+        return res.json("ok");
+      }
+    });
+  } catch (err) {
+    return res.json(err);
+  }
+});
+
+router.get("/assistances", (req, res, next) => {
+  let token = req.headers["authorization"].split(" ")[1];
+  if (!token) {
+    return res.redirect("/login");
+  }
+
+  try {
+    jwt.verify(token, process.env.SECRET_KEY, async function (err, decoded) {
+      if (err) return res.json(err);
+      if (decoded._id) {
+        let supportForm = await Support.find({ receiveId: decoded._id });
+        let result = [];
+        for (let e of supportForm) {
+          let info = await Product.find({
+            _id: e.productId,
+          });
+          let { image, description } = info[0];
+          let { _id, sendId, receiveId, reason } = e;
+          result.push({
+            _id,
+            sendId,
+            receiveId,
+            reason,
+            image,
+            description,
+          });
+        }
+        return res.json(result);
+      }
+    });
+  } catch (err) {
+    return res.json(err);
+  }
+});
 module.exports = router;
 
 // Xử lí việc lưu vào đâu

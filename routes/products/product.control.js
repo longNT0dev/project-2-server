@@ -9,7 +9,7 @@ router.get("/", (req, res, next) => {
   let page = req.query.page;
   let limit = Number(req.query.limit);
 
-  Product.find({ status: 1 })
+  Product.find({ status: 1,quantity: {$ne: 0}   })
     .skip((page - 1) * limit)
     .limit(limit)
     .exec((err, products) => {

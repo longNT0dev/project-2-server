@@ -5,7 +5,6 @@ const ProductSchema = mongoose.Schema({
     type: String,
     required: true,
   },
-  // Chọn 1 số sản phẩm nhất định
   description: {
     type: String,
     required: true,

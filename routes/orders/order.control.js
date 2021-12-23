@@ -10,7 +10,7 @@ router.post("/order", (req, res, next) => {
     return res.redirect("/login");
   }
   try {
-    jwt.verify(token, process.env.SECRET_KEY, function (err, decoded) {
+    jwt.verify(token, process.env.SECRET_KEY, async function (err, decoded) {
       if (err) return res.json(err);
       if (decoded._id) {
         const newOrder = new Order({
@@ -22,13 +22,13 @@ router.post("/order", (req, res, next) => {
           productId: req.query.id,
           quantity: req.query.quantity,
         });
-        newOrder.save(function (err) {
+        await newOrder.save(function (err) {
           if (err) return res.json(err);
           Product.updateOne(
-            { productId: req.params.productId },
+            { _id: req.query.id },
             {
               $inc: {
-                quantity: -req.params.quantity,
+                quantity: -Number(req.query.quantity),
               },
             },
             function (err) {
@@ -99,7 +99,6 @@ router.post("/cancel-order", (req, res, next) => {
     return res.status(403).json({ err });
   }
 });
-
 
 router.post("/cancel-undo", (req, res, next) => {
   let token = req.headers["authorization"].split(" ")[1];
